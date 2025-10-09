@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/status_card.dart';
+import 'package:intl/intl.dart';
 import '../widgets/parameter_tile.dart';
 import 'charts_screen.dart';
 import 'alerts_screen.dart';
@@ -8,9 +8,6 @@ import 'device_screen.dart';
 import 'settings_screen.dart';
 import '../providers/dummy_data.dart';
 import '../providers/weather_provider.dart';
-import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/fuzzy_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -264,7 +261,7 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        ref.refresh(weatherProvider);
+                        ref.refresh(formattedWeatherProvider);
                       },
                       icon: const Icon(Icons.sync),
                       label: const Text('Sync'),
@@ -305,13 +302,7 @@ class DashboardScreen extends ConsumerWidget {
   // pastikan file provider kamu diimpor
 
   Widget _buildWeatherCard(BuildContext context, WidgetRef ref) {
-    final weatherAsync = ref.watch(weatherProvider);
-
-    String formatTanggal(String date) {
-      final dateTime = DateTime.parse(date);
-      final formatter = DateFormat('EEEE, d MMMM yyyy', 'id_ID');
-      return formatter.format(dateTime);
-    }
+    final weatherAsync = ref.watch(formattedWeatherProvider);
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -319,131 +310,151 @@ class DashboardScreen extends ConsumerWidget {
       margin: const EdgeInsets.all(16),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: weatherAsync.when(
-          data: (weatherData) {
-            final current = weatherData['current'];
-            final location = weatherData['location'];
-            final forecastDays =
-                weatherData['forecast']['forecastday'] as List<dynamic>;
+        child: weatherAsync == null
+            ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+            : _buildWeatherContent(context, weatherAsync),
+      ),
+    );
+  }
 
-            return Column(
+  Widget _buildWeatherContent(
+    BuildContext context,
+    Map<String, dynamic> weatherData,
+  ) {
+    String formatTanggal(String date) {
+      final dateTime = DateTime.parse(date);
+      final formatter = DateFormat('EEEE, d MMMM yyyy', 'id_ID');
+      return formatter.format(dateTime);
+    }
+
+    final current = weatherData['current'];
+    final location = weatherData['location'];
+    final hourlyForecast =
+        weatherData['hourly_forecast'] as List<dynamic>? ?? [];
+
+    // Group hourly forecast by days (take first entry of each day for daily summary)
+    final Map<String, dynamic> dailyData = {};
+    for (var item in hourlyForecast) {
+      final date = (item['datetime'] as DateTime).toIso8601String().split(
+        'T',
+      )[0];
+      if (!dailyData.containsKey(date)) {
+        dailyData[date] = item;
+      }
+    }
+    final forecastDays = dailyData.values.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header lokasi
+        Row(
+          children: [
+            const Icon(Icons.location_on, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text(
+              '${location['name']}, ${location['country']}',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Cuaca saat ini
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header lokasi
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.blueAccent),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${location['name']}, ${location['region']}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Cuaca saat ini
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${current['temp_c']}°C',
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          current['condition']['text'],
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 4),
-                        Text('Kelembapan: ${current['humidity']}%'),
-                        Text('Angin: ${current['wind_kph']} km/jam'),
-                        Text('Terasa seperti: ${current['feelslike_c']}°C'),
-                      ],
-                    ),
-                    Image.network(
-                      'https:${current['condition']['icon']}',
-                      width: 70,
-                      height: 70,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.cloud_off, size: 48),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
                 Text(
-                  'Prakiraan Cuaca ${forecastDays.length} Hari ke Depan',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  '${current['temperature']}°C',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
-
-                // Daftar prakiraan cuaca
-                Column(
-                  children: forecastDays.map((day) {
-                    final date = formatTanggal(day['date']);
-                    final condition = day['day']['condition'];
-                    final avgTemp = day['day']['avgtemp_c'];
-                    final humidity = day['day']['avghumidity'];
-                    final maxTemp = day['day']['maxtemp_c'];
-                    final minTemp = day['day']['mintemp_c'];
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      color: const Color.fromARGB(255, 2, 70, 119),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 8,
-                        ),
-                        leading: Image.network(
-                          'https:${condition['icon']}',
-                          width: 40,
-                          height: 40,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.cloud, size: 32),
-                        ),
-                        title: Text(
-                          date,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${condition['text']}\n'
-                          'Suhu: ${minTemp.toStringAsFixed(1)}°C - ${maxTemp.toStringAsFixed(1)}°C • '
-                          'Kelembapan: ${humidity.toStringAsFixed(0)}%',
-                        ),
-                        trailing: Text(
-                          '${avgTemp.toStringAsFixed(1)}°C',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                Text(
+                  current['description'] ?? 'Tidak ada data',
+                  style: const TextStyle(fontSize: 16),
                 ),
+                const SizedBox(height: 4),
+                Text('Kelembapan: ${current['humidity']}%'),
+                Text('Angin: ${(current['wind_speed'] * 3.6).round()} km/jam'),
+                Text('Terasa seperti: ${current['feels_like']}°C'),
               ],
-            );
-          },
-          loading: () =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          error: (err, _) => Text(
-            'Terjadi kesalahan: $err',
-            style: const TextStyle(color: Colors.red),
-          ),
+            ),
+            Image.network(
+              'https://openweathermap.org/img/wn/${current['icon']}@2x.png',
+              width: 70,
+              height: 70,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.cloud_off, size: 48),
+            ),
+          ],
         ),
-      ),
+
+        const SizedBox(height: 24),
+        Text(
+          'Prakiraan Cuaca ${forecastDays.length} Hari ke Depan',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+
+        // Daftar prakiraan cuaca
+        Column(
+          children: forecastDays.map((day) {
+            final date = formatTanggal(
+              (day['datetime'] as DateTime).toIso8601String().split('T')[0],
+            );
+            final description = day['description'] ?? 'Tidak ada data';
+            final temp = day['temperature'];
+            final humidity = day['humidity'];
+            final tempMax = day['temp_max'] ?? temp;
+            final tempMin = day['temp_min'] ?? temp;
+
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              color: const Color.fromARGB(255, 2, 70, 119),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 8,
+                ),
+                leading: Image.network(
+                  'https://openweathermap.org/img/wn/${day['icon']}@2x.png',
+                  width: 40,
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.cloud, size: 32),
+                ),
+                title: Text(
+                  date,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                subtitle: Text(
+                  '$description\n'
+                  'Suhu: ${tempMin}°C - ${tempMax}°C • '
+                  'Kelembapan: ${humidity}%',
+                ),
+                trailing: Text(
+                  '${temp}°C',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 

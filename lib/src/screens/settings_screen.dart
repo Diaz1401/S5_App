@@ -117,7 +117,9 @@ class SettingsScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       Consumer(
                         builder: (context, ref, child) {
-                          final selectedTheme = ref.watch(selectedThemeProvider);
+                          final selectedTheme = ref.watch(
+                            selectedThemeProvider,
+                          );
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -133,17 +135,27 @@ class SettingsScreen extends ConsumerWidget {
                                   final isSelected = selectedTheme == themeType;
                                   return GestureDetector(
                                     onTap: () {
-                                      ref.read(selectedThemeProvider.notifier).state = themeType;
+                                      ref
+                                              .read(
+                                                selectedThemeProvider.notifier,
+                                              )
+                                              .state =
+                                          themeType;
                                     },
                                     child: Container(
                                       width: 80,
                                       height: 60,
                                       decoration: BoxDecoration(
-                                        color: ThemeManager.getThemePreviewColor(themeType),
+                                        color:
+                                            ThemeManager.getThemePreviewColor(
+                                              themeType,
+                                            ),
                                         borderRadius: BorderRadius.circular(8),
                                         border: isSelected
                                             ? Border.all(
-                                                color: Theme.of(context).colorScheme.primary,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
                                                 width: 3,
                                               )
                                             : Border.all(
@@ -152,14 +164,16 @@ class SettingsScreen extends ConsumerWidget {
                                               ),
                                       ),
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Container(
                                             width: 24,
                                             height: 24,
                                             decoration: BoxDecoration(
                                               color: Colors.white,
-                                              borderRadius: BorderRadius.circular(4),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                             ),
                                             child: isSelected
                                                 ? const Icon(
@@ -171,7 +185,9 @@ class SettingsScreen extends ConsumerWidget {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            ThemeManager.getThemeName(themeType).split(' ')[0],
+                                            ThemeManager.getThemeName(
+                                              themeType,
+                                            ).split(' ')[0],
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 10,
