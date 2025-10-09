@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/providers.dart';
+import '../theme/theme_manager.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -110,6 +111,80 @@ class SettingsScreen extends ConsumerWidget {
                                     value;
                               }
                             },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final selectedTheme = ref.watch(selectedThemeProvider);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Theme Style',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                children: AppThemeType.values.map((themeType) {
+                                  final isSelected = selectedTheme == themeType;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      ref.read(selectedThemeProvider.notifier).state = themeType;
+                                    },
+                                    child: Container(
+                                      width: 80,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: ThemeManager.getThemePreviewColor(themeType),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: isSelected
+                                            ? Border.all(
+                                                color: Theme.of(context).colorScheme.primary,
+                                                width: 3,
+                                              )
+                                            : Border.all(
+                                                color: Colors.grey.shade300,
+                                                width: 1,
+                                              ),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 24,
+                                            height: 24,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: isSelected
+                                                ? const Icon(
+                                                    Icons.check,
+                                                    size: 16,
+                                                    color: Colors.green,
+                                                  )
+                                                : null,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            ThemeManager.getThemeName(themeType).split(' ')[0],
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
                           );
                         },
                       ),

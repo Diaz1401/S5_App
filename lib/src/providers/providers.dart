@@ -11,6 +11,11 @@ import '../models/chart_time_range.dart'; // tambahkan ini
 // Theme mode provider
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
+// Theme selection provider
+enum AppThemeType { brown, blue }
+
+final selectedThemeProvider = StateProvider<AppThemeType>((ref) => AppThemeType.brown);
+
 // Pond providers
 final pondsProvider = StateNotifierProvider<PondsNotifier, List<Pond>>((ref) {
   return PondsNotifier();

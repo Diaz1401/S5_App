@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/theme.dart';
 
 class AlertCard extends StatelessWidget {
   final String title;
@@ -78,12 +77,12 @@ class AlertCard extends StatelessWidget {
   Color _getSeverityColor(String severity) {
     switch (severity.toLowerCase()) {
       case 'critical':
-        return AppTheme.errorRed;
+        return const Color(0xFFD32F2F);
       case 'warning':
-        return AppTheme.warningOrange;
+        return const Color(0xFFF59E0B);
       case 'info':
       default:
-        return AppTheme.accentBlue;
+        return const Color(0xFF29B6F6);
     }
   }
 

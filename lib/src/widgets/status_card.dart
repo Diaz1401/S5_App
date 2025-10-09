@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/theme.dart';
+import '../theme/theme_manager.dart';
 
 class StatusCard extends StatelessWidget {
   final double? wqScore;
@@ -11,7 +11,7 @@ class StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayScore = wqScore?.toStringAsFixed(0) ?? '—';
     final displayStatus = status ?? 'Unknown';
-    final statusColor = AppTheme.getStatusColor(displayStatus);
+    final statusColor = ThemeManager.getStatusColor(displayStatus);
 
     return SizedBox(
       width: double.infinity,
