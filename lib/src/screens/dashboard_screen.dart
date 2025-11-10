@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/status_card.dart';
 import '../widgets/parameter_tile.dart';
 import 'charts_screen.dart';
 import 'alerts_screen.dart';
 import 'device_screen.dart';
 import 'settings_screen.dart';
-import '../providers/dummy_data.dart';
 import '../providers/weather_provider.dart';
+import '../providers/firebase_providers.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/fuzzy_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -120,77 +117,113 @@ class DashboardScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // WQ Score Card
-              // WQ Score Card (Fuzzy Mamdani)
-              Consumer(
-                builder: (context, ref, _) {
-                  final fuzzy = ref.watch(fuzzyProvider);
-                  final label = fuzzy['result']['label'];
-                  final score = fuzzy['result']['score'];
+              // WQ Score Card (Fuzzy Mamdani) - derived from realtime sensors
+              Builder(
+                builder: (context) {
+                  final fuzzyAsync = ref.watch(fuzzyProvider);
 
-                  return Card(
-                    color: _labelColor(label).withOpacity(0.1),
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  return fuzzyAsync.when(
+                    data: (fuzzy) {
+                      final label = fuzzy['result']['label'];
+                      final score = (fuzzy['result']['score'] as num)
+                          .toDouble();
+
+                      return Card(
+                        color: _labelColor(label).withOpacity(0.1),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Status Kualitas Air',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Kategori: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
+                                  Text(
+                                    'Status Kualitas Air',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Kategori: ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        _labelText(label),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: _labelColor(label),
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   Text(
-                                    _labelText(label),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: _labelColor(label),
-                                      fontSize: 18,
-                                    ),
+                                    'Skor: ${score.toStringAsFixed(1)} / 100',
+                                    style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
                               ),
-                              Text(
-                                'Skor: ${score.toStringAsFixed(1)} / 100',
-                                style: const TextStyle(fontSize: 16),
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: _labelColor(label),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    label,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: _labelColor(label),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                label,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
+                      );
+                    },
+                    loading: () => Card(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            CircularProgressIndicator(strokeWidth: 2),
+                          ],
+                        ),
+                      ),
+                    ),
+                    error: (err, _) => Card(
+                      color: Colors.red.withOpacity(0.08),
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Error loading WQ score: $err',
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       ),
                     ),
                   );
@@ -204,25 +237,68 @@ class DashboardScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
+              // Read live sensor values from Realtime Database
               Row(
                 children: [
                   Expanded(
-                    child: ParameterTile(
-                      icon: Icons.water_drop,
-                      title: 'pH',
-                      value: DummyData.ph.toStringAsFixed(1),
-                      unit: '',
-                      trend: DummyData.phTrend,
+                    child: Builder(
+                      builder: (context) {
+                        final sensors = ref.watch(realtimeSensorProvider);
+                        String phVal = '...';
+                        String? lastUpdate;
+                        if (sensors.hasError) phVal = 'ERR';
+                        sensors.when(
+                          data: (reading) {
+                            phVal = (reading.values['ph'] != null)
+                                ? (reading.values['ph']!.toStringAsFixed(1))
+                                : '-';
+                            lastUpdate = _formatTimestamp(reading.timestamp);
+                          },
+                          loading: () {},
+                          error: (_, __) {},
+                        );
+
+                        return ParameterTile(
+                          icon: Icons.water_drop,
+                          title: 'pH',
+                          value: phVal,
+                          unit: '',
+                          trend: TrendDirection
+                              .neutral, // Real trend akan diimplementasi nanti
+                          lastUpdate: lastUpdate,
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ParameterTile(
-                      icon: Icons.thermostat,
-                      title: 'Temperature',
-                      value: DummyData.temperature.toStringAsFixed(1),
-                      unit: '°C',
-                      trend: DummyData.tempTrend,
+                    child: Builder(
+                      builder: (context) {
+                        final sensors = ref.watch(realtimeSensorProvider);
+                        String tVal = '...';
+                        String? lastUpdate;
+                        sensors.when(
+                          data: (reading) {
+                            tVal = (reading.values['temperature'] != null)
+                                ? (reading.values['temperature']!
+                                      .toStringAsFixed(1))
+                                : '-';
+                            lastUpdate = _formatTimestamp(reading.timestamp);
+                          },
+                          loading: () {},
+                          error: (_, __) => tVal = 'ERR',
+                        );
+
+                        return ParameterTile(
+                          icon: Icons.thermostat,
+                          title: 'Temperature',
+                          value: tVal,
+                          unit: '°C',
+                          trend: TrendDirection
+                              .neutral, // Real trend akan diimplementasi nanti
+                          lastUpdate: lastUpdate,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -231,22 +307,64 @@ class DashboardScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: ParameterTile(
-                      icon: Icons.opacity,
-                      title: 'TDS',
-                      value: DummyData.tds.toStringAsFixed(1),
-                      unit: 'mg/L',
-                      trend: DummyData.tdsTrend,
+                    child: Builder(
+                      builder: (context) {
+                        final sensors = ref.watch(realtimeSensorProvider);
+                        String dVal = '...';
+                        String? lastUpdate;
+                        sensors.when(
+                          data: (reading) {
+                            dVal = (reading.values['tds'] != null)
+                                ? (reading.values['tds']!.toStringAsFixed(1))
+                                : '-';
+                            lastUpdate = _formatTimestamp(reading.timestamp);
+                          },
+                          loading: () {},
+                          error: (_, __) => dVal = 'ERR',
+                        );
+
+                        return ParameterTile(
+                          icon: Icons.opacity,
+                          title: 'TDS',
+                          value: dVal,
+                          unit: 'mg/L',
+                          trend: TrendDirection
+                              .neutral, // Real trend akan diimplementasi nanti
+                          lastUpdate: lastUpdate,
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ParameterTile(
-                      icon: Icons.visibility,
-                      title: 'Turbidity',
-                      value: DummyData.turbidity.toStringAsFixed(1),
-                      unit: 'NTU',
-                      trend: DummyData.turbidityTrend,
+                    child: Builder(
+                      builder: (context) {
+                        final sensors = ref.watch(realtimeSensorProvider);
+                        String bVal = '...';
+                        String? lastUpdate;
+                        sensors.when(
+                          data: (reading) {
+                            bVal = (reading.values['turbidity'] != null)
+                                ? (reading.values['turbidity']!.toStringAsFixed(
+                                    1,
+                                  ))
+                                : '-';
+                            lastUpdate = _formatTimestamp(reading.timestamp);
+                          },
+                          loading: () {},
+                          error: (_, __) => bVal = 'ERR',
+                        );
+
+                        return ParameterTile(
+                          icon: Icons.visibility,
+                          title: 'Turbidity',
+                          value: bVal,
+                          unit: 'NTU',
+                          trend: TrendDirection
+                              .neutral, // Real trend akan diimplementasi nanti
+                          lastUpdate: lastUpdate,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -264,7 +382,8 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        ref.refresh(weatherProvider);
+                        // invalidate provider to force a refresh (returns void)
+                        ref.invalidate(weatherProvider);
                       },
                       icon: const Icon(Icons.sync),
                       label: const Text('Sync'),
@@ -479,6 +598,22 @@ class DashboardScreen extends ConsumerWidget {
         return 'Risiko Sangat Tinggi';
       default:
         return 'Tidak Diketahui';
+    }
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      final formatter = DateFormat('d MMM y, HH:mm');
+      return formatter.format(timestamp);
     }
   }
 }

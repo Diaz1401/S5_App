@@ -63,11 +63,37 @@ class ChartsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // === Grafik dummy ===
+                      // === Grafik dummy / chart ===
                       SizedBox(
-                        height:
-                            300, // Gunakan SizedBox biar tidak error di ScrollView
-                        child: ChartPlaceholder(timeRange: timeRange),
+                        height: 300,
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final sensorAsync = ref.watch(
+                              firestoreSensorProvider('device_01'),
+                            );
+
+                            return sensorAsync.when(
+                              data: (sample) {
+                                if (sample == null) {
+                                  return const Center(
+                                    child: Text(
+                                      "Tidak ada data sensor terbaru",
+                                    ),
+                                  );
+                                }
+                                // tampilkan chart dengan data terbaru
+                                return ChartPlaceholder(
+                                  timeRange: timeRange,
+                                  sample: sample,
+                                );
+                              },
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              error: (err, stack) => Text('Error: $err'),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
