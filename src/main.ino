@@ -1,0 +1,208 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <FirebaseClient.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include "time.h"
+
+// SECRET CONFIG START
+// SECRET CONFIG END
+
+// ---------- PIN SENSOR ----------
+const int turbidityPin = 32;
+const int tdsPin = 33;
+const int pHPin = 34;
+
+// ---------- DS18B20 ----------
+#define ONE_WIRE_BUS 4
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+
+// ---------- Kalibrasi ----------
+float tdsCalibration = 0.3;
+float phVoltageOffset = 0.0;
+float phSlope = 3.0;
+
+// ---------- NTP ----------
+const char* ntpServer = "id.pool.ntp.org";
+const long gmtOffset_sec = 7 * 3600;
+const int daylightOffset_sec = 0;
+
+// ---------- Firebase Objects ----------
+UserAuth user_auth(API_KEY, USER_EMAIL, USER_PASSWORD);
+FirebaseApp app;
+WiFiClientSecure ssl_client;
+using AsyncClient = AsyncClientClass;
+DefaultNetwork network;
+AsyncClient aClient(ssl_client, getNetwork(network));
+RealtimeDatabase Database;
+
+// Timer variables
+unsigned long lastSendTime = 0;
+const unsigned long sendInterval = 10000; // 10 seconds
+
+// Variables
+String uid;
+unsigned long timestamp;
+
+// JSON objects
+object_t jsonData, obj1, obj2, obj3, obj4, obj5;
+JsonWriter writer;
+
+// Forward declarations
+void processData(AsyncResult &aResult);
+
+// ---------------------------------------------------------------------
+// SENSOR FUNCTIONS
+// ---------------------------------------------------------------------
+
+float readTurbidity() {
+  int raw = analogRead(turbidityPin);
+  float voltage = (raw / 4095.0) * 3.3 * (5.0 / 3.3);
+  float ntu = -1234.6 * voltage + 4925;
+  if (ntu < 0) ntu = 0;
+  return ntu;
+}
+
+float readTDS(float temperature) {
+  long sum = 0;
+  for (int i = 0; i < 10; i++) {
+    sum += analogRead(tdsPin);
+    delay(5);
+  }
+  float adc = sum / 10.0;
+  float voltage = (adc / 4095.0) * 3.3 * (5.0 / 3.3);
+
+  float compensation = 1 + 0.02 * (temperature - 25.0);
+  float compensatedVoltage = voltage / compensation;
+
+  float tds = (133.42 * pow(compensatedVoltage, 3)
+               - 255.86 * pow(compensatedVoltage, 2)
+               + 857.39 * compensatedVoltage) * tdsCalibration;
+
+  return tds;
+}
+
+float readPH() {
+  long sum = 0;
+  for (int i = 0; i < 10; i++) {
+    sum += analogRead(pHPin);
+    delay(5);
+  }
+  float adc = sum / 10.0;
+  float voltage = (adc / 4095.0) * 3.3 * (5.0 / 3.3);
+  float pHValue = 7 + ((2.5 - voltage + phVoltageOffset) / phSlope);
+  return pHValue;
+}
+
+float readTemperature() {
+  sensors.requestTemperatures();
+  return sensors.getTempCByIndex(0);
+}
+
+unsigned long getTime() {
+  time_t now;
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    return(0);
+  }
+  time(&now);
+  return now;
+}
+
+// ---------------------------------------------------------------------
+
+void setup() {
+  Serial.begin(115200);
+  analogReadResolution(12);
+  sensors.begin();
+
+  // =================== WIFI ===================
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println("\nWiFi Connected!");
+
+  // =================== NTP ===================
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  // =================== FIREBASE ===================
+  ssl_client.setInsecure();
+  ssl_client.setTimeout(10000);
+  ssl_client.setHandshakeTimeout(30);
+
+  Serial.println("Initializing Firebase...");
+  initializeApp(aClient, app, getAuth(user_auth), processData, "authTask");
+  app.getApp<RealtimeDatabase>(Database);
+  Database.url(DATABASE_URL);
+}
+
+void loop() {
+  app.loop();
+
+  if (app.ready()) {
+    unsigned long currentTime = millis();
+    if (currentTime - lastSendTime >= sendInterval) {
+      lastSendTime = currentTime;
+
+      uid = app.getUid().c_str();
+      timestamp = getTime();
+
+      if (timestamp == 0) {
+        Serial.println("Failed to obtain time");
+        return;
+      }
+
+      // Path: /sensorData/{uid}/{timestamp}
+      String parentPath = "/sensorData/" + uid + "/" + String(timestamp);
+
+      float temperature = readTemperature();
+      float turbidity = readTurbidity();
+      float tds = readTDS(temperature);
+      float ph = readPH();
+
+      Serial.println("----- SENSOR DATA -----");
+      Serial.println("Timestamp: " + String(timestamp));
+      Serial.println("Temp: " + String(temperature));
+      Serial.println("Turbidity: " + String(turbidity));
+      Serial.println("TDS: " + String(tds));
+      Serial.println("pH: " + String(ph));
+      Serial.println("------------------------");
+
+      // Create JSON
+      writer.create(obj1, "/temperature", temperature);
+      writer.create(obj2, "/turbidity", turbidity);
+      writer.create(obj3, "/tds", tds);
+      writer.create(obj4, "/ph", ph);
+      writer.create(obj5, "/timestamp", (int)timestamp);
+
+      writer.join(jsonData, 5, obj1, obj2, obj3, obj4, obj5);
+
+      Database.set<object_t>(aClient, parentPath, jsonData, processData, "RTDB_Send_Data");
+    }
+  }
+}
+
+void processData(AsyncResult &aResult) {
+  // if (!aResult.isResult()) return;
+
+  if (aResult.isEvent()) {
+    Serial.printf("Event task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.appEvent().message().c_str(), aResult.appEvent().code());
+  }
+
+  if (aResult.isDebug()) {
+    Serial.printf("Debug task: %s, msg: %s\n", aResult.uid().c_str(), aResult.debug().c_str());
+  }
+
+  if (aResult.isError()) {
+    Serial.printf("Error task: %s, msg: %s, code: %d\n", aResult.uid().c_str(), aResult.error().message().c_str(), aResult.error().code());
+  }
+
+  if (aResult.available()) {
+    Serial.printf("task: %s, payload: %s\n", aResult.uid().c_str(), aResult.c_str());
+  }
+}
