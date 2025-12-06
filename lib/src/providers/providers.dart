@@ -83,20 +83,6 @@ class DeviceInfoNotifier extends StateNotifier<DeviceInfo?> {
   void updateDeviceStatus(bool isConnected) {}
 }
 
-// Weather provider
-final weatherProvider = StateNotifierProvider<WeatherNotifier, WeatherInfo?>((
-  ref,
-) {
-  return WeatherNotifier();
-});
-
-class WeatherNotifier extends StateNotifier<WeatherInfo?> {
-  WeatherNotifier() : super(null);
-
-  // TODO: Fetch weather data from API
-  void fetchWeather() {}
-}
-
 // Settings providers
 final weatherEnabledProvider = StateProvider<bool>((ref) => true);
 

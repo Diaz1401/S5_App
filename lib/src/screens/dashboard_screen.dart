@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/providers.dart';
 import '../widgets/parameter_tile.dart';
 import 'charts_screen.dart';
 import 'alerts_screen.dart';
@@ -442,6 +443,12 @@ class DashboardScreen extends ConsumerWidget {
   // pastikan file provider kamu diimpor
 
   Widget _buildWeatherCard(BuildContext context, WidgetRef ref) {
+    final isWeatherEnabled = ref.watch(weatherEnabledProvider);
+
+    if (!isWeatherEnabled) {
+      return const SizedBox.shrink();
+    }
+
     final weatherAsync = ref.watch(weatherProvider);
 
     String formatTanggal(String date) {
