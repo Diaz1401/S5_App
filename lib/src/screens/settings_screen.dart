@@ -8,7 +8,6 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final weatherEnabled = ref.watch(weatherEnabledProvider);
-    final fuzzySensitivity = ref.watch(fuzzySensitivityProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -141,44 +140,6 @@ class SettingsScreen extends ConsumerWidget {
                           ref.read(weatherEnabledProvider.notifier).state =
                               value;
                         },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Analysis settings
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Analysis Settings',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Fuzzy Logic Sensitivity',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Slider(
-                        value: fuzzySensitivity,
-                        min: 0.0,
-                        max: 1.0,
-                        divisions: 10,
-                        label: '${(fuzzySensitivity * 100).round()}%',
-                        onChanged: (value) {
-                          ref.read(fuzzySensitivityProvider.notifier).state =
-                              value;
-                        },
-                      ),
-                      Text(
-                        'Higher values make the system more sensitive to parameter changes',
-                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),

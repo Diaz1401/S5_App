@@ -104,7 +104,6 @@ class WeatherNotifier extends StateNotifier<WeatherInfo?> {
 
 // Settings providers
 final weatherEnabledProvider = StateProvider<bool>((ref) => true);
-final fuzzySensitivityProvider = StateProvider<double>((ref) => 0.5);
 
 // Default: tampilan 24 jam
 final chartTimeRangeProvider = StateProvider<ChartTimeRange>(
