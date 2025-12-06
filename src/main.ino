@@ -6,10 +6,17 @@
 #include <DallasTemperature.h>
 #include "time.h"
 
-const bool DEMO_MODE = true;
-
-// SECRET CONFIG START
-// SECRET CONFIG END
+/* Load secret credentials. This header file should define the following:
+#define WIFI_SSID       "your-ssid"
+#define WIFI_PASSWORD   "your-password"
+#define API_KEY         "your-firebase-api-key"
+#define DATABASE_URL    "your-firebase-database-url"
+#define USER_EMAIL      "your-firebase-user-email"
+#define USER_PASSWORD   "your-firebase-user-password"
+const bool DEMO_MODE = false;  // Set to true for demo mode with random data
+Big thanks to https://randomnerdtutorials.com/esp32-data-logging-firebase-realtime-database
+*/
+#include "secret.h"
 
 // ---------- PIN SENSOR ----------
 const int turbidityPin = 32;
