@@ -63,30 +63,30 @@ class ChartsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // === Grafik dummy / chart ===
+                      // === Grafik real-time 1 menit terakhir ===
                       SizedBox(
                         height: 300,
                         child: Consumer(
                           builder: (context, ref, _) {
-                            // Read latest sensor sample from Firebase RTDB for the given device.
+                            // Read history samples (last 1 minute) from Firebase RTDB for the given device.
                             const deviceId = 'CQMyMNobhyZbfYSExmQjPkINOWC2';
-                            final sensorAsync = ref.watch(
-                              realtimeSensorProvider(deviceId),
+                            final historyAsync = ref.watch(
+                              historySensorProvider(deviceId),
                             );
 
-                            return sensorAsync.when(
-                              data: (sample) {
-                                if (sample == null) {
+                            return historyAsync.when(
+                              data: (samples) {
+                                if (samples.isEmpty) {
                                   return const Center(
                                     child: Text(
                                       "Tidak ada data sensor terbaru",
                                     ),
                                   );
                                 }
-                                // tampilkan chart dengan data terbaru
+                                // tampilkan chart dengan data 1 menit terakhir
                                 return ChartPlaceholder(
                                   timeRange: timeRange,
-                                  sample: sample,
+                                  samples: samples,
                                 );
                               },
                               loading: () => const Center(

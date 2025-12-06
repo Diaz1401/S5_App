@@ -66,3 +66,64 @@ final realtimeSensorProvider =
         );
       });
     });
+
+/// History provider: reads all timestamped samples under sensorData/{deviceId}
+/// and returns a continuously updating list filtered to the last 1 minute.
+final historySensorProvider =
+    StreamProvider.family<List<WaterQualitySample>, String>((
+      ref,
+      deviceId,
+    ) async* {
+      // Ensure we are signed in as admin first.
+      await ref.watch(firebaseAuthProvider.future);
+
+      final db = FirebaseDatabase.instance;
+      final refSensor = db.ref('sensorData/$deviceId');
+
+      // Listen to all changes under the device node.
+      yield* refSensor.onValue.map((event) {
+        if (!event.snapshot.exists || event.snapshot.value == null) {
+          return <WaterQualitySample>[];
+        }
+
+        final raw = Map<String, dynamic>.from(event.snapshot.value as Map);
+
+        final now = DateTime.now();
+        final oneMinuteAgo = now.subtract(const Duration(minutes: 1));
+
+        final samples = <WaterQualitySample>[];
+
+        raw.forEach((key, value) {
+          if (key == 'realtime') return; // skip realtime node
+
+          final entry = Map<String, dynamic>.from(value as Map);
+
+          final tsNum = (entry['timestamp'] as num?)?.toInt();
+          if (tsNum == null) return;
+
+          final ts = DateTime.fromMillisecondsSinceEpoch(tsNum * 1000);
+          if (ts.isBefore(oneMinuteAgo)) return; // only last 1 minute
+
+          final ph = (entry['ph'] as num?)?.toDouble();
+          final tds = (entry['tds'] as num?)?.toDouble();
+          final temperature = (entry['temperature'] as num?)?.toDouble();
+          final turbidity = (entry['turbidity'] as num?)?.toDouble();
+
+          samples.add(
+            WaterQualitySample(
+              id: key,
+              pondId: deviceId,
+              timestamp: ts,
+              ph: ph,
+              tds: tds,
+              temperature: temperature,
+              turbidity: turbidity,
+              status: 'good',
+            ),
+          );
+        });
+
+        samples.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        return samples;
+      });
+    });
