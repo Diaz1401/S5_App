@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/providers.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -17,54 +18,54 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Pond selection
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pond Selection',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: 'main_pond', // TODO: get from provider
-                        decoration: const InputDecoration(
-                          labelText: 'Current Pond',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'main_pond',
-                            child: Text('Main Pond'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'pond_2',
-                            child: Text('Pond 2'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'pond_3',
-                            child: Text('Pond 3'),
-                          ),
-                        ], // TODO: get pond list from provider
-                        onChanged: (value) {
-                          // TODO: update selected pond in provider
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          // TODO: add new pond
-                        },
-                        child: const Text('Add New Pond'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              // Pond selection TODO: implement pond management
+              // Card(
+              //   child: Padding(
+              //     padding: const EdgeInsets.all(16.0),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Text(
+              //           'Pond Selection',
+              //           style: Theme.of(context).textTheme.titleMedium,
+              //         ),
+              //         const SizedBox(height: 12),
+              //         DropdownButtonFormField<String>(
+              //           value: 'main_pond', // TODO: get from provider
+              //           decoration: const InputDecoration(
+              //             labelText: 'Current Pond',
+              //             border: OutlineInputBorder(),
+              //           ),
+              //           items: const [
+              //             DropdownMenuItem(
+              //               value: 'main_pond',
+              //               child: Text('Main Pond'),
+              //             ),
+              //             DropdownMenuItem(
+              //               value: 'pond_2',
+              //               child: Text('Pond 2'),
+              //             ),
+              //             DropdownMenuItem(
+              //               value: 'pond_3',
+              //               child: Text('Pond 3'),
+              //             ),
+              //           ], // TODO: get pond list from provider
+              //           onChanged: (value) {
+              //             // TODO: update selected pond in provider
+              //           },
+              //         ),
+              //         const SizedBox(height: 8),
+              //         ElevatedButton(
+              //           onPressed: () {
+              //             // TODO: add new pond
+              //           },
+              //           child: const Text('Add New Pond'),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 16),
 
               // Theme settings
               Card(
@@ -80,14 +81,44 @@ class SettingsScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
                       Consumer(
                         builder: (context, ref, child) {
+                          final currentTheme = ref.watch(themeProvider);
+                          return DropdownButtonFormField<AppThemeType>(
+                            value: currentTheme,
+                            decoration: const InputDecoration(
+                              labelText: 'Color Mode',
+                              border: OutlineInputBorder(),
+                              helperText: 'Choose the visual color theme',
+                            ),
+                            items: AppThemeType.values.map((theme) {
+                              return DropdownMenuItem(
+                                value: theme,
+                                child: Text(
+                                  theme.name[0].toUpperCase() +
+                                      theme.name.substring(1),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                ref
+                                    .read(themeProvider.notifier)
+                                    .setTheme(value);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      Consumer(
+                        builder: (context, ref, child) {
                           final themeMode = ref.watch(themeModeProvider);
                           return DropdownButtonFormField<ThemeMode>(
-                            initialValue: themeMode,
+                            value: themeMode,
                             decoration: const InputDecoration(
                               labelText: 'Theme Mode',
                               border: OutlineInputBorder(),
                               helperText:
-                                  'Choose how the app appearance follows your system settings',
+                                  'Choose Light, Dark, or System Default',
                             ),
                             items: const [
                               DropdownMenuItem(
@@ -105,8 +136,9 @@ class SettingsScreen extends ConsumerWidget {
                             ],
                             onChanged: (value) {
                               if (value != null) {
-                                ref.read(themeModeProvider.notifier).state =
-                                    value;
+                                ref
+                                    .read(themeModeProvider.notifier)
+                                    .setMode(value);
                               }
                             },
                           );

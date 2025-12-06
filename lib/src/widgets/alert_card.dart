@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/theme.dart';
+import '../utils/color_utils.dart';
 
 class AlertCard extends StatelessWidget {
   final String title;
@@ -19,7 +19,7 @@ class AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final severityColor = _getSeverityColor(severity);
+    final severityColor = _getSeverityColor(context, severity);
     final severityIcon = _getSeverityIcon(severity);
 
     return Card(
@@ -75,16 +75,8 @@ class AlertCard extends StatelessWidget {
     );
   }
 
-  Color _getSeverityColor(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'critical':
-        return AppTheme.errorRed;
-      case 'warning':
-        return AppTheme.warningOrange;
-      case 'info':
-      default:
-        return AppTheme.accentBlue;
-    }
+  Color _getSeverityColor(BuildContext context, String severity) {
+    return ColorUtils.getSeverityColor(context, severity);
   }
 
   IconData _getSeverityIcon(String severity) {

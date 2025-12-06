@@ -1,13 +1,8 @@
-import 'package:flutter/material.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../models/sample.dart';
 import '../models/chart_time_range.dart'; // tambahkan ini
 
 // TODO: Implement state management with Riverpod
-
-// Theme mode provider
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
 // Pond providers
 final pondsProvider = StateNotifierProvider<PondsNotifier, List<Pond>>((ref) {
