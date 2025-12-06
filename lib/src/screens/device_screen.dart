@@ -7,7 +7,7 @@ class DeviceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Devices')),
+      appBar: AppBar(title: const Text('Perangkat')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -15,7 +15,7 @@ class DeviceScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Device & Calibration',
+                'Perangkat & Kalibrasi',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 24),
@@ -32,7 +32,7 @@ class DeviceScreen extends ConsumerWidget {
                           const Icon(Icons.device_hub),
                           const SizedBox(width: 8),
                           Text(
-                            'Device Information',
+                            'Informasi Perangkat',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ],
@@ -40,11 +40,11 @@ class DeviceScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
 
                       _buildInfoRow(
-                        'Device Name',
+                        'Nama Perangkat',
                         '—',
                       ), // TODO: Get from deviceInfoProvider
                       _buildInfoRow(
-                        'Battery Level',
+                        'Level Baterai',
                         '—%',
                       ), // TODO: Get from deviceInfoProvider
                       _buildInfoRow(
@@ -52,7 +52,7 @@ class DeviceScreen extends ConsumerWidget {
                         '—',
                       ), // TODO: Get from deviceInfoProvider
                       _buildInfoRow(
-                        'Last Sync',
+                        'Sinkronisasi Terakhir',
                         '—',
                       ), // TODO: Get from deviceInfoProvider
                       _buildInfoRow(
@@ -67,7 +67,7 @@ class DeviceScreen extends ConsumerWidget {
 
               // Calibration section
               Text(
-                'Sensor Calibration',
+                'Kalibrasi Sensor',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
@@ -79,18 +79,18 @@ class DeviceScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Calibration Offsets',
+                        'Offset Kalibrasi',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
 
-                      _buildCalibrationField('pH Offset', '0.00'),
+                      _buildCalibrationField('Offset pH', '0.00'),
                       const SizedBox(height: 12),
-                      _buildCalibrationField('Temperature Offset (°C)', '0.0'),
+                      _buildCalibrationField('Offset Suhu (°C)', '0.0'),
                       const SizedBox(height: 12),
-                      _buildCalibrationField('TDS Offset (mg/L)', '0'),
+                      _buildCalibrationField('Offset TDS (mg/L)', '0'),
                       const SizedBox(height: 12),
-                      _buildCalibrationField('Turbidity Offset (NTU)', '0.0'),
+                      _buildCalibrationField('Offset Kekeruhan (NTU)', '0.0'),
                       const SizedBox(height: 24),
 
                       SizedBox(
@@ -99,7 +99,7 @@ class DeviceScreen extends ConsumerWidget {
                           onPressed: () {
                             // TODO: Save calibration values
                           },
-                          child: const Text('Save Calibration'),
+                          child: const Text('Simpan Kalibrasi'),
                         ),
                       ),
                     ],

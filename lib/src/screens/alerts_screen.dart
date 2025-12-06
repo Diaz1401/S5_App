@@ -11,7 +11,7 @@ class AlertsScreen extends ConsumerWidget {
     final alerts = ref.watch(alertsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Alerts')),
+      appBar: AppBar(title: const Text('Peringatan')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -22,7 +22,7 @@ class AlertsScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Alerts & Logs',
+                    'Peringatan & Log',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   ElevatedButton.icon(
@@ -30,7 +30,7 @@ class AlertsScreen extends ConsumerWidget {
                       _showAddInterventionModal(context);
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Intervention'),
+                    label: const Text('Tambah Intervensi'),
                   ),
                 ],
               ),
@@ -38,7 +38,7 @@ class AlertsScreen extends ConsumerWidget {
 
               Expanded(
                 child: alerts.isEmpty
-                    ? const Center(child: Text('No alerts yet'))
+                    ? const Center(child: Text('Belum ada peringatan'))
                     : ListView.builder(
                         itemCount: alerts.length,
                         itemBuilder: (context, index) {
@@ -79,14 +79,14 @@ class AlertsScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Add Intervention',
+                'Tambah Intervensi',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
 
               TextField(
                 decoration: const InputDecoration(
-                  labelText: 'Intervention Type',
+                  labelText: 'Jenis Intervensi',
                   border: OutlineInputBorder(),
                 ),
                 onChanged: (value) {
@@ -97,7 +97,7 @@ class AlertsScreen extends ConsumerWidget {
 
               TextField(
                 decoration: const InputDecoration(
-                  labelText: 'Notes',
+                  labelText: 'Catatan',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
@@ -112,7 +112,7 @@ class AlertsScreen extends ConsumerWidget {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: const Text('Batal'),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -120,7 +120,7 @@ class AlertsScreen extends ConsumerWidget {
                       // TODO: Save intervention
                       Navigator.pop(context);
                     },
-                    child: const Text('Save'),
+                    child: const Text('Simpan'),
                   ),
                 ],
               ),

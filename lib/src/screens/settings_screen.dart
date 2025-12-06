@@ -11,7 +11,7 @@ class SettingsScreen extends ConsumerWidget {
     final weatherEnabled = ref.watch(weatherEnabledProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('Pengaturan')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -75,7 +75,7 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Theme Settings',
+                        'Pengaturan Tema',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 12),
@@ -85,17 +85,23 @@ class SettingsScreen extends ConsumerWidget {
                           return DropdownButtonFormField<AppThemeType>(
                             value: currentTheme,
                             decoration: const InputDecoration(
-                              labelText: 'Color Mode',
+                              labelText: 'Mode Warna',
                               border: OutlineInputBorder(),
-                              helperText: 'Choose the visual color theme',
+                              helperText: 'Pilih tema warna visual',
                             ),
                             items: AppThemeType.values.map((theme) {
+                              String label;
+                              switch (theme) {
+                                case AppThemeType.rose:
+                                  label = 'Mawar';
+                                  break;
+                                case AppThemeType.leaves:
+                                  label = 'Daun';
+                                  break;
+                              }
                               return DropdownMenuItem(
                                 value: theme,
-                                child: Text(
-                                  theme.name[0].toUpperCase() +
-                                      theme.name.substring(1),
-                                ),
+                                child: Text(label),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -115,23 +121,23 @@ class SettingsScreen extends ConsumerWidget {
                           return DropdownButtonFormField<ThemeMode>(
                             value: themeMode,
                             decoration: const InputDecoration(
-                              labelText: 'Theme Mode',
+                              labelText: 'Mode Tema',
                               border: OutlineInputBorder(),
                               helperText:
-                                  'Choose Light, Dark, or System Default',
+                                  'Pilih Terang, Gelap, atau Default Sistem',
                             ),
                             items: const [
                               DropdownMenuItem(
                                 value: ThemeMode.system,
-                                child: Text('System Default'),
+                                child: Text('Default Sistem'),
                               ),
                               DropdownMenuItem(
                                 value: ThemeMode.light,
-                                child: Text('Light Mode'),
+                                child: Text('Mode Terang'),
                               ),
                               DropdownMenuItem(
                                 value: ThemeMode.dark,
-                                child: Text('Dark Mode'),
+                                child: Text('Mode Gelap'),
                               ),
                             ],
                             onChanged: (value) {
@@ -158,14 +164,14 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Weather Integration',
+                        'Integrasi Cuaca',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
                       SwitchListTile(
-                        title: const Text('Enable Weather Data'),
+                        title: const Text('Aktifkan Data Cuaca'),
                         subtitle: const Text(
-                          'Show weather information on dashboard',
+                          'Tampilkan informasi cuaca di dasbor',
                         ),
                         value: weatherEnabled,
                         onChanged: (value) {
@@ -187,7 +193,7 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Data Management',
+                        'Manajemen Data',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
@@ -198,7 +204,7 @@ class SettingsScreen extends ConsumerWidget {
                             // TODO: Export database
                           },
                           icon: const Icon(Icons.download),
-                          label: const Text('Export Database'),
+                          label: const Text('Ekspor Database'),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -209,7 +215,7 @@ class SettingsScreen extends ConsumerWidget {
                             _showClearDataDialog(context);
                           },
                           icon: const Icon(Icons.delete_outline),
-                          label: const Text('Clear All Data'),
+                          label: const Text('Hapus Semua Data'),
                         ),
                       ),
                     ],
@@ -227,14 +233,14 @@ class SettingsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear All Data'),
+        title: const Text('Hapus Semua Data'),
         content: const Text(
-          'This action will permanently delete all water quality data, alerts, and settings. This cannot be undone.',
+          'Tindakan ini akan menghapus semua data kualitas air, peringatan, dan pengaturan secara permanen. Ini tidak dapat dibatalkan.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
@@ -242,7 +248,7 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear'),
+            child: const Text('Hapus'),
           ),
         ],
       ),

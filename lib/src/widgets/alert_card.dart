@@ -96,11 +96,11 @@ class AlertCard extends StatelessWidget {
     final difference = now.difference(timestamp);
 
     if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
+      return '${difference.inMinutes}m lalu';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
+      return '${difference.inHours}j lalu';
     } else {
-      return '${difference.inDays}d ago';
+      return '${difference.inDays}h lalu';
     }
   }
 }

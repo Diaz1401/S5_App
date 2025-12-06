@@ -13,7 +13,7 @@ class ChartsScreen extends ConsumerWidget {
     final timeRange = ref.watch(chartTimeRangeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Charts')),
+      appBar: AppBar(title: const Text('Grafik')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -22,7 +22,7 @@ class ChartsScreen extends ConsumerWidget {
             children: [
               // === Judul halaman ===
               Text(
-                'Water Quality Trends',
+                'Tren Kualitas Air',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
@@ -56,9 +56,9 @@ class ChartsScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _buildLegendItem('pH', Colors.blue),
-                          _buildLegendItem('Temp', Colors.red),
+                          _buildLegendItem('Suhu', Colors.red),
                           _buildLegendItem('TDS', Colors.green),
-                          _buildLegendItem('Turbidity', Colors.orange),
+                          _buildLegendItem('Kekeruhan', Colors.orange),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -92,7 +92,7 @@ class ChartsScreen extends ConsumerWidget {
                               loading: () => const Center(
                                 child: CircularProgressIndicator(),
                               ),
-                              error: (err, stack) => Text('Error: $err'),
+                              error: (err, stack) => Text('Kesalahan: $err'),
                             );
                           },
                         ),

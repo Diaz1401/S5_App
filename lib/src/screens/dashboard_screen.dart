@@ -22,7 +22,7 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Dasbor'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -54,7 +54,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Current Pond: Main Pond', // TODO: get from provider
+                    'Kolam Saat Ini: Kolam Utama', // TODO: get from provider
                     style: TextStyle(
                       // color: Colors.white70,
                       fontSize: 16,
@@ -65,13 +65,13 @@ class DashboardScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
+              title: const Text('Dasbor'),
               selected: true,
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.show_chart),
-              title: const Text('Charts'),
+              title: const Text('Grafik'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -82,7 +82,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.warning),
-              title: const Text('Alerts'),
+              title: const Text('Peringatan'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -93,7 +93,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.device_hub),
-              title: const Text('Device'),
+              title: const Text('Perangkat'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -105,7 +105,7 @@ class DashboardScreen extends ConsumerWidget {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+              title: const Text('Pengaturan'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -229,7 +229,7 @@ class DashboardScreen extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Text(
-                          'Error loading WQ score: $err',
+                          'Gagal memuat skor kualitas air: $err',
                           style: const TextStyle(color: Colors.red),
                         ),
                       ),
@@ -241,7 +241,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // Parameter tiles
               Text(
-                'Water Parameters',
+                'Parameter Air',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
@@ -310,7 +310,7 @@ class DashboardScreen extends ConsumerWidget {
 
                         return ParameterTile(
                           icon: Icons.thermostat,
-                          title: 'Temperature',
+                          title: 'Suhu',
                           value: tVal,
                           unit: '°C',
                           trend: TrendDirection
@@ -385,7 +385,7 @@ class DashboardScreen extends ConsumerWidget {
 
                         return ParameterTile(
                           icon: Icons.visibility,
-                          title: 'Turbidity',
+                          title: 'Kekeruhan',
                           value: bVal,
                           unit: 'NTU',
                           trend: TrendDirection
@@ -631,11 +631,11 @@ class DashboardScreen extends ConsumerWidget {
     final difference = now.difference(timestamp);
 
     if (difference.inMinutes < 1) {
-      return 'just now';
+      return 'baru saja';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
+      return '${difference.inMinutes}m lalu';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
+      return '${difference.inHours}j lalu';
     } else {
       final formatter = DateFormat('d MMM y, HH:mm');
       return formatter.format(timestamp);

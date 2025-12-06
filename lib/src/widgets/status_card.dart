@@ -10,7 +10,7 @@ class StatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayScore = wqScore?.toStringAsFixed(0) ?? '—';
-    final displayStatus = status ?? 'Unknown';
+    final displayStatus = status ?? 'Tidak Diketahui';
     final statusColor = ColorUtils.getStatusColor(context, displayStatus);
 
     return SizedBox(
@@ -21,7 +21,7 @@ class StatusCard extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Water Quality Score',
+                'Skor Kualitas Air',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
