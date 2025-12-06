@@ -6,6 +6,8 @@
 #include <DallasTemperature.h>
 #include "time.h"
 
+const bool DEMO_MODE = true;
+
 // SECRET CONFIG START
 // SECRET CONFIG END
 
@@ -40,7 +42,7 @@ RealtimeDatabase Database;
 
 // Timer variables
 unsigned long lastSendTime = 0;
-const unsigned long sendInterval = 10000; // 10 seconds
+const unsigned long sendInterval = DEMO_MODE ? 2000 : 60000;
 
 // Variables
 String uid;
@@ -58,6 +60,7 @@ void processData(AsyncResult &aResult);
 // ---------------------------------------------------------------------
 
 float readTurbidity() {
+  if (DEMO_MODE) return random(5.00, 30.00);
   int raw = analogRead(turbidityPin);
   float voltage = (raw / 4095.0) * 3.3 * (5.0 / 3.3);
   float ntu = -1234.6 * voltage + 4925;
@@ -66,6 +69,7 @@ float readTurbidity() {
 }
 
 float readTDS(float temperature) {
+  if (DEMO_MODE) return random(100.00, 250.00);
   long sum = 0;
   for (int i = 0; i < 10; i++) {
     sum += analogRead(tdsPin);
@@ -85,6 +89,7 @@ float readTDS(float temperature) {
 }
 
 float readPH() {
+  if (DEMO_MODE) return random(6.5, 7.5);
   long sum = 0;
   for (int i = 0; i < 10; i++) {
     sum += analogRead(pHPin);
@@ -97,6 +102,7 @@ float readPH() {
 }
 
 float readTemperature() {
+  if (DEMO_MODE) return random(25.0, 32.0);
   sensors.requestTemperatures();
   return sensors.getTempCByIndex(0);
 }
@@ -115,6 +121,7 @@ unsigned long getTime() {
 
 void setup() {
   Serial.begin(115200);
+  randomSeed(analogRead(35));
   analogReadResolution(12);
   sensors.begin();
 
@@ -157,8 +164,8 @@ void loop() {
         return;
       }
 
-      // Path: /sensorData/{uid}/{timestamp}
-      String parentPath = "/sensorData/" + uid + "/" + String(timestamp);
+      String parentPath = "/sensorData/" + uid;
+      String timestampPath = parentPath + "/" + String(timestamp);
 
       float temperature = readTemperature();
       float turbidity = readTurbidity();
@@ -182,7 +189,10 @@ void loop() {
 
       writer.join(jsonData, 5, obj1, obj2, obj3, obj4, obj5);
 
-      Database.set<object_t>(aClient, parentPath, jsonData, processData, "RTDB_Send_Data");
+      Database.set<object_t>(aClient, timestampPath, jsonData, processData, "RTDB_Send_Data");
+      
+      String realtimePath = parentPath + "/realtime";
+      Database.set<object_t>(aClient, realtimePath, jsonData, processData, "RTDB_Update_Realtime");
     }
   }
 }
