@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/alert_card.dart';
+import '../providers/alerts_provider.dart';
 
 class AlertsScreen extends ConsumerWidget {
   const AlertsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final alerts = ref.watch(alertsProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Alerts')),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,27 +37,25 @@ class AlertsScreen extends ConsumerWidget {
               const SizedBox(height: 16),
 
               Expanded(
-                child: ListView.builder(
-                  itemCount: 5, // TODO: Get from alertsProvider
-                  itemBuilder: (context, index) {
-                    return AlertCard(
-                      title: 'Alert ${index + 1}', // TODO: Get from alert.title
-                      description:
-                          'Sample alert description', // TODO: Get from alert.description
-                      severity: index % 3 == 0
-                          ? 'critical'
-                          : index % 2 == 0
-                          ? 'warning'
-                          : 'info',
-                      timestamp: DateTime.now().subtract(
-                        Duration(hours: index + 1),
+                child: alerts.isEmpty
+                    ? const Center(child: Text('No alerts yet'))
+                    : ListView.builder(
+                        itemCount: alerts.length,
+                        itemBuilder: (context, index) {
+                          final alert = alerts[index];
+                          return AlertCard(
+                            title: alert.title,
+                            description: alert.description,
+                            severity: alert.severity,
+                            timestamp: alert.timestamp,
+                            onTap: () {
+                              ref
+                                  .read(alertsProvider.notifier)
+                                  .markAsRead(alert.id);
+                            },
+                          );
+                        },
                       ),
-                      onTap: () {
-                        // TODO: Handle alert tap
-                      },
-                    );
-                  },
-                ),
               ),
             ],
           ),

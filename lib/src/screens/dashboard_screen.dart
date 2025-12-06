@@ -9,20 +9,27 @@ import '../providers/weather_provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/fuzzy_provider.dart';
 import '../providers/sensor_rtdb_provider.dart';
+import '../providers/alerts_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Monitor alerts
+    ref.watch(alertMonitorProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.sync),
+            icon: const Icon(Icons.settings),
             onPressed: () {
-              /* TODO: sync */
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
             },
           ),
         ],
@@ -236,7 +243,7 @@ class DashboardScreen extends ConsumerWidget {
                 'Water Parameters',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               // Read live sensor values from Realtime Database
               Row(
                 children: [
@@ -392,6 +399,7 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // Quick actions
+              /*
               Text(
                 'Quick Actions',
                 style: Theme.of(context).textTheme.titleLarge,
@@ -399,17 +407,6 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // invalidate provider to force a refresh (returns void)
-                        ref.invalidate(weatherProvider);
-                      },
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Sync'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
@@ -431,7 +428,8 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              */
+              const SizedBox(height: 12),
 
               // Weather card
               _buildWeatherCard(context, ref),
@@ -455,9 +453,9 @@ class DashboardScreen extends ConsumerWidget {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(12),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: weatherAsync.when(
           data: (weatherData) {
             final current = weatherData['current'];

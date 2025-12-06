@@ -24,24 +24,22 @@ final firebaseAuthProvider = FutureProvider<User?>((ref) async {
 });
 
 /// Fetch latest water quality sample for a given device from Firebase RTDB.
-/// Listens to the 'realtime' node for continuous updates.
-final realtimeSensorProvider =
-    StreamProvider.family<WaterQualitySample?, String>((ref, deviceId) async* {
+/// Polls the 'realtime' node every 10 seconds.
+final realtimeSensorProvider = StreamProvider.autoDispose
+    .family<WaterQualitySample?, String>((ref, deviceId) async* {
       // Ensure we are signed in as admin first.
       await ref.watch(firebaseAuthProvider.future);
 
       final db = FirebaseDatabase.instance;
-
-      // Path: sensorData/{deviceId}/realtime
       final refSensor = db.ref('sensorData/$deviceId/realtime');
 
-      // Listen to the stream of events
-      yield* refSensor.onValue.map((event) {
-        if (!event.snapshot.exists || event.snapshot.value == null) {
+      Future<WaterQualitySample?> fetch() async {
+        final snapshot = await refSensor.get();
+        if (!snapshot.exists || snapshot.value == null) {
           return null;
         }
 
-        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
 
         final ph = (data['ph'] as num?)?.toDouble();
         final tds = (data['tds'] as num?)?.toDouble();
@@ -64,7 +62,14 @@ final realtimeSensorProvider =
           turbidity: turbidity,
           status: 'good',
         );
-      });
+      }
+
+      yield await fetch();
+
+      while (true) {
+        await Future.delayed(const Duration(seconds: 10));
+        yield await fetch();
+      }
     });
 
 /// History provider: reads all timestamped samples under sensorData/{deviceId}

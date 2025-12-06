@@ -102,26 +102,6 @@ class WeatherNotifier extends StateNotifier<WeatherInfo?> {
   void fetchWeather() {}
 }
 
-// Sync status provider
-final syncStatusProvider =
-    StateNotifierProvider<SyncStatusNotifier, SyncStatus>((ref) {
-      return SyncStatusNotifier();
-    });
-
-enum SyncStatus { idle, syncing, success, error }
-
-class SyncStatusNotifier extends StateNotifier<SyncStatus> {
-  SyncStatusNotifier() : super(SyncStatus.idle);
-
-  // TODO: Implement sync logic
-  Future<void> syncData() async {
-    state = SyncStatus.syncing;
-    // TODO: Perform actual sync operation
-    await Future.delayed(const Duration(seconds: 2));
-    state = SyncStatus.success;
-  }
-}
-
 // Settings providers
 final weatherEnabledProvider = StateProvider<bool>((ref) => true);
 final fuzzySensitivityProvider = StateProvider<double>((ref) => 0.5);

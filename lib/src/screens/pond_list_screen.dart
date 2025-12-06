@@ -79,13 +79,6 @@ class PondListScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Trigger sync
-        },
-        tooltip: 'Sync Data',
-        child: const Icon(Icons.sync),
-      ),
     );
   }
 }
