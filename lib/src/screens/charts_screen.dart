@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../widgets/chart_placeholder.dart';
 import '../providers/providers.dart';
+import '../providers/sensor_rtdb_provider.dart';
 import '../models/chart_time_range.dart';
 
 class ChartsScreen extends ConsumerWidget {
@@ -68,8 +68,10 @@ class ChartsScreen extends ConsumerWidget {
                         height: 300,
                         child: Consumer(
                           builder: (context, ref, _) {
+                            // Read latest sensor sample from Firebase RTDB for the given device.
+                            const deviceId = 'CQMyMNobhyZbfYSExmQjPkINOWC2';
                             final sensorAsync = ref.watch(
-                              firestoreSensorProvider('device_01'),
+                              realtimeSensorProvider(deviceId),
                             );
 
                             return sensorAsync.when(

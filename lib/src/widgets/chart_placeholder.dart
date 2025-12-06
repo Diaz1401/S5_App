@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/chart_time_range.dart';
-import '../providers/providers.dart';
-import '../models/sample.dart'; // firestoreSensorProvider
+import '../models/sample.dart';
 
 class ChartPlaceholder extends StatelessWidget {
   final ChartTimeRange timeRange;
@@ -20,10 +18,12 @@ class ChartPlaceholder extends StatelessWidget {
     return LineChart(
       LineChartData(
         lineBarsData: [
-          _buildLine('pH', sample.ph, Colors.blue),
-          _buildLine('Temp', sample.temperature, Colors.red),
-          _buildLine('TDS', sample.tds, Colors.green),
-          _buildLine('Turbidity', sample.turbidity, Colors.orange),
+          if (sample.ph != null) _buildLine('pH', sample.ph!, Colors.blue),
+          if (sample.temperature != null)
+            _buildLine('Temp', sample.temperature!, Colors.red),
+          if (sample.tds != null) _buildLine('TDS', sample.tds!, Colors.green),
+          if (sample.turbidity != null)
+            _buildLine('Turbidity', sample.turbidity!, Colors.orange),
         ],
       ),
     );

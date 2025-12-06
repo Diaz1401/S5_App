@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/sample.dart';
-import '../providers/providers.dart';
 import 'dashboard_screen.dart';
 
 class PondListScreen extends ConsumerWidget {

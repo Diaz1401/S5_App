@@ -6,9 +6,9 @@ import 'alerts_screen.dart';
 import 'device_screen.dart';
 import 'settings_screen.dart';
 import '../providers/weather_provider.dart';
-import '../providers/firebase_providers.dart';
 import 'package:intl/intl.dart';
 import '../providers/fuzzy_provider.dart';
+import '../providers/sensor_rtdb_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -243,16 +243,21 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: Builder(
                       builder: (context) {
-                        final sensors = ref.watch(realtimeSensorProvider);
+                        const deviceId = 'CQMyMNobhyZbfYSExmQjPkINOWC2';
+                        final sensors = ref.watch(
+                          realtimeSensorProvider(deviceId),
+                        );
                         String phVal = '...';
                         String? lastUpdate;
                         if (sensors.hasError) phVal = 'ERR';
                         sensors.when(
                           data: (reading) {
-                            phVal = (reading.values['ph'] != null)
-                                ? (reading.values['ph']!.toStringAsFixed(1))
-                                : '-';
-                            lastUpdate = _formatTimestamp(reading.timestamp);
+                            if (reading != null) {
+                              phVal = reading.ph?.toStringAsFixed(1) ?? '-';
+                              lastUpdate = _formatTimestamp(reading.timestamp);
+                            } else {
+                              phVal = '-';
+                            }
                           },
                           loading: () {},
                           error: (_, __) {},
@@ -274,16 +279,22 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: Builder(
                       builder: (context) {
-                        final sensors = ref.watch(realtimeSensorProvider);
+                        const deviceId = 'CQMyMNobhyZbfYSExmQjPkINOWC2';
+                        final sensors = ref.watch(
+                          realtimeSensorProvider(deviceId),
+                        );
                         String tVal = '...';
                         String? lastUpdate;
                         sensors.when(
                           data: (reading) {
-                            tVal = (reading.values['temperature'] != null)
-                                ? (reading.values['temperature']!
-                                      .toStringAsFixed(1))
-                                : '-';
-                            lastUpdate = _formatTimestamp(reading.timestamp);
+                            if (reading != null) {
+                              tVal =
+                                  reading.temperature?.toStringAsFixed(1) ??
+                                  '-';
+                              lastUpdate = _formatTimestamp(reading.timestamp);
+                            } else {
+                              tVal = '-';
+                            }
                           },
                           loading: () {},
                           error: (_, __) => tVal = 'ERR',
@@ -309,15 +320,20 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: Builder(
                       builder: (context) {
-                        final sensors = ref.watch(realtimeSensorProvider);
+                        const deviceId = 'CQMyMNobhyZbfYSExmQjPkINOWC2';
+                        final sensors = ref.watch(
+                          realtimeSensorProvider(deviceId),
+                        );
                         String dVal = '...';
                         String? lastUpdate;
                         sensors.when(
                           data: (reading) {
-                            dVal = (reading.values['tds'] != null)
-                                ? (reading.values['tds']!.toStringAsFixed(1))
-                                : '-';
-                            lastUpdate = _formatTimestamp(reading.timestamp);
+                            if (reading != null) {
+                              dVal = reading.tds?.toStringAsFixed(1) ?? '-';
+                              lastUpdate = _formatTimestamp(reading.timestamp);
+                            } else {
+                              dVal = '-';
+                            }
                           },
                           loading: () {},
                           error: (_, __) => dVal = 'ERR',
@@ -339,17 +355,21 @@ class DashboardScreen extends ConsumerWidget {
                   Expanded(
                     child: Builder(
                       builder: (context) {
-                        final sensors = ref.watch(realtimeSensorProvider);
+                        const deviceId = 'CQMyMNobhyZbfYSExmQjPkINOWC2';
+                        final sensors = ref.watch(
+                          realtimeSensorProvider(deviceId),
+                        );
                         String bVal = '...';
                         String? lastUpdate;
                         sensors.when(
                           data: (reading) {
-                            bVal = (reading.values['turbidity'] != null)
-                                ? (reading.values['turbidity']!.toStringAsFixed(
-                                    1,
-                                  ))
-                                : '-';
-                            lastUpdate = _formatTimestamp(reading.timestamp);
+                            if (reading != null) {
+                              bVal =
+                                  reading.turbidity?.toStringAsFixed(1) ?? '-';
+                              lastUpdate = _formatTimestamp(reading.timestamp);
+                            } else {
+                              bVal = '-';
+                            }
                           },
                           loading: () {},
                           error: (_, __) => bVal = 'ERR',

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'chart_dummy_data.dart';
-import '../models/chart_time_range.dart'; // tambahkan ini
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import '../models/sample.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../models/chart_time_range.dart'; // tambahkan ini
 
 // TODO: Implement state management with Riverpod
 
@@ -94,60 +88,6 @@ class DeviceInfoNotifier extends StateNotifier<DeviceInfo?> {
   void updateDeviceStatus(bool isConnected) {}
 }
 
-final firestoreSensorProvider =
-    FutureProvider.family<WaterQualitySample?, String>((ref, deviceId) async {
-      try {
-        // 1️⃣ Ambil daftar subcollection dari server Node.js (Firebase Admin)
-        final response = await http.get(
-          Uri.parse('http://192.168.1.9:3000/collections/$deviceId'),
-        ); // Ganti IP sesuai komputer kamu
-
-        if (response.statusCode != 200) {
-          throw Exception('HTTP Error: ${response.statusCode}');
-        }
-
-        final data = jsonDecode(response.body);
-        final List subcollections = data['subcollections'] ?? [];
-
-        if (subcollections.isEmpty) {
-          debugPrint('⚠️ Tidak ada subcollection ditemukan untuk $deviceId');
-          return null;
-        }
-
-        // 2️⃣ Ambil subcollection terakhir (biasanya terbaru)
-        final subcollectionName = subcollections.last;
-        debugPrint('📁 Subcollection aktif: $subcollectionName');
-
-        // 3️⃣ Ambil data dari Firestore
-        final collectionRef = FirebaseFirestore.instance
-            .collection('riwayat')
-            .doc(deviceId)
-            .collection(subcollectionName);
-
-        debugPrint(
-          '📥 Fetching data from: riwayat/$deviceId/$subcollectionName',
-        );
-
-        // Ambil dokumen terbaru
-        final latestDocs = await collectionRef
-            .orderBy('timestamp', descending: true)
-            .limit(1)
-            .get();
-
-        if (latestDocs.docs.isNotEmpty) {
-          final sensorData = latestDocs.docs.first.data();
-          debugPrint('✅ Data terbaru: $sensorData');
-          return WaterQualitySample.fromFirestore(sensorData);
-        } else {
-          debugPrint('⚠️ Tidak ada data di $subcollectionName');
-          return null;
-        }
-      } catch (e, stack) {
-        debugPrint('❌ Firestore error: $e');
-        debugPrintStack(stackTrace: stack);
-        throw Exception("Firestore read failed: $e");
-      }
-    });
 // Weather provider
 final weatherProvider = StateNotifierProvider<WeatherNotifier, WeatherInfo?>((
   ref,
