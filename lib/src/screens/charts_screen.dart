@@ -57,7 +57,7 @@ class ChartsScreen extends ConsumerWidget {
                         children: [
                           _buildLegendItem('pH', Colors.blue),
                           _buildLegendItem('Suhu', Colors.red),
-                          _buildLegendItem('TDS', Colors.green),
+                          _buildLegendItem('Salinitas', Colors.green),
                           _buildLegendItem('Kekeruhan', Colors.orange),
                         ],
                       ),

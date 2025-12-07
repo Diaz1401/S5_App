@@ -53,7 +53,7 @@ class ChartPlaceholder extends StatelessWidget {
 
     final phSpots = buildSpots((s) => s.ph);
     final tempSpots = buildSpots((s) => s.temperature);
-    final tdsSpots = buildSpots((s) => s.tds);
+    final salSpots = buildSpots((s) => s.salinity);
     final turbSpots = buildSpots((s) => s.turbidity);
 
     final bars = <LineChartBarData>[];
@@ -64,8 +64,8 @@ class ChartPlaceholder extends StatelessWidget {
     if (tempSpots.isNotEmpty) {
       bars.add(_buildLine(tempSpots, Colors.red));
     }
-    if (tdsSpots.isNotEmpty) {
-      bars.add(_buildLine(tdsSpots, Colors.green));
+    if (salSpots.isNotEmpty) {
+      bars.add(_buildLine(salSpots, Colors.green));
     }
     if (turbSpots.isNotEmpty) {
       bars.add(_buildLine(turbSpots, Colors.orange));

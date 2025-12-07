@@ -337,7 +337,8 @@ class DashboardScreen extends ConsumerWidget {
                         sensors.when(
                           data: (reading) {
                             if (reading != null) {
-                              dVal = reading.tds?.toStringAsFixed(1) ?? '-';
+                              dVal =
+                                  reading.salinity?.toStringAsFixed(1) ?? '-';
                               lastUpdate = _formatTimestamp(reading.timestamp);
                             } else {
                               dVal = '-';
@@ -349,9 +350,9 @@ class DashboardScreen extends ConsumerWidget {
 
                         return ParameterTile(
                           icon: Icons.opacity,
-                          title: 'TDS',
+                          title: 'Salinitas',
                           value: dVal,
-                          unit: 'mg/L',
+                          unit: 'ppt',
                           trend: TrendDirection
                               .neutral, // Real trend akan diimplementasi nanti
                           lastUpdate: lastUpdate,

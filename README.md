@@ -1,6 +1,6 @@
 # TRASI - Sistem Pemantauan Kualitas Air
 
-TRASI adalah aplikasi mobile berbasis Flutter yang dirancang untuk pemantauan kualitas air secara real-time di tambak udang. Aplikasi ini terintegrasi dengan sensor IoT untuk memvisualisasikan parameter penting seperti pH, suhu, TDS, dan kekeruhan, membantu pengguna menjaga kondisi optimal untuk akuakultur.
+TRASI adalah aplikasi mobile berbasis Flutter yang dirancang untuk pemantauan kualitas air secara real-time di tambak udang. Aplikasi ini terintegrasi dengan sensor IoT untuk memvisualisasikan parameter penting seperti pH, suhu, Salinitas, dan kekeruhan, membantu pengguna menjaga kondisi optimal untuk akuakultur.
 
 ## 🌟 Fitur Utama
 

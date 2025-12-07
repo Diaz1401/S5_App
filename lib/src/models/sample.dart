@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class WaterQualitySample {
   final String id;
   final String pondId;
@@ -20,6 +22,15 @@ class WaterQualitySample {
     this.wqScore,
     required this.status,
   });
+
+  /// Calculates Salinity (ppt) from TDS (ppm).
+  /// Formula: Salinity = 0.4665 * (EC^1.0878)
+  /// Where EC (mS/cm) = (TDS / 0.64) / 1000
+  double? get salinity {
+    if (tds == null) return null;
+    final double ec_mS = (tds! / 0.64) / 1000.0;
+    return 0.4665 * pow(ec_mS, 1.0878);
+  }
 }
 
 class Pond {

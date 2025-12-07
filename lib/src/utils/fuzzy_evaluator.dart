@@ -1,5 +1,5 @@
 // lib/src/utils/fuzzy_evaluator.dart
-// Implementasi Fuzzy Mamdani untuk 4 input (pH, temperature, tds, turbidity)
+// Implementasi Fuzzy Mamdani untuk 3 input (pH, Salinity derived from TDS, turbidity)
 // Output: kategori risiko {RSR, RR, RS, RT, RST} + nilai defuzzifikasi (0..100)
 
 import 'dart:math';
@@ -11,294 +11,108 @@ class FuzzyEvaluator {
   // returns Map: { 'label': 'RS'|'RR'|..., 'score': double (0..100) }
   static Map<String, dynamic> evaluate({
     required double ph,
-    required double temperature,
-    required double tds,
+    required double tds, // Input TDS dalam ppm (mg/L)
     required double turbidity,
   }) {
+    // 0) Konversi TDS (ppm) ke Salinitas (ppt)
+    // Rumus:
+    // EC (uS/cm) = TDS (ppm) / 0.64
+    // EC (mS/cm) = EC (uS/cm) / 1000
+    // Salinity (ppt) = 0.4665 * (EC ^ 1.0878)
+    // Source: https://www.sciencing.com/convert-specific-conductivity-salinity-5915328/
+    final double ec_mS = (tds / 0.64) / 1000.0;
+    final double salinity = 0.4665 * pow(ec_mS, 1.0878);
+
     // 1) Fuzzifikasi: hitung derajat keanggotaan tiap linguistic term
     final phMFs = _phMemberships(ph);
-    final tempMFs = _tempMemberships(temperature);
-    final tdsMFs = _tdsMemberships(tds);
+    final salMFs = _salinityMemberships(salinity);
     final turbMFs = _turbMemberships(turbidity);
 
-    // 2) Rule base Mamdani
-    // Rule didefinisikan sebagai:
-    // { 'if': {'ph':'N'|'L'|'H', 'temp':..., 'tds':..., 'turb':...}, 'then': 'RSR'|'RR'|'RS'|'RT'|'RST' }
-    // Kita gunakan banyak kombinasi umum. Edit rules ini sesuai PDF-mu bila perlu.
+    // 2) Rule base Mamdani (18 Rules)
+    // pH (3) x Salinity (3) x Turbidity (2) = 18 rules
+    // pH: L, N, H
+    // Salinity: L, N, H
+    // Turb: N, T (Normal, Turbid)
+
     final List<Map<String, dynamic>> rules = [
+      // pH Normal
       {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'N', 'turb': 'N'},
+        'if': {'ph': 'N', 'sal': 'N', 'turb': 'N'},
         'then': 'RSR',
-      },
+      }, // Semua Normal -> Sangat Rendah
       {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'N', 'turb': 'L'},
+        'if': {'ph': 'N', 'sal': 'N', 'turb': 'T'},
+        'then': 'RS',
+      }, // Turbid -> Sedang
+      {
+        'if': {'ph': 'N', 'sal': 'L', 'turb': 'N'},
         'then': 'RR',
-      },
+      }, // Sal Low -> Rendah
       {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'L', 'turb': 'N'},
+        'if': {'ph': 'N', 'sal': 'L', 'turb': 'T'},
+        'then': 'RS',
+      }, // Sal Low + Turbid -> Sedang
+      {
+        'if': {'ph': 'N', 'sal': 'H', 'turb': 'N'},
         'then': 'RR',
-      },
+      }, // Sal High -> Rendah
       {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'H', 'turb': 'N'},
-        'then': 'RR',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'L', 'tds': 'N', 'turb': 'N'},
-        'then': 'RR',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'H', 'tds': 'N', 'turb': 'N'},
-        'then': 'RR',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'N', 'tds': 'N', 'turb': 'N'},
-        'then': 'RR',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'N', 'tds': 'N', 'turb': 'N'},
-        'then': 'RR',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'N', 'turb': 'H'},
+        'if': {'ph': 'N', 'sal': 'H', 'turb': 'T'},
         'then': 'RS',
-      },
+      }, // Sal High + Turbid -> Sedang
+      // pH Low
       {
-        'if': {'ph': 'L', 'temp': 'L', 'tds': 'N', 'turb': 'N'},
+        'if': {'ph': 'L', 'sal': 'N', 'turb': 'N'},
         'then': 'RS',
-      },
+      }, // pH Low -> Sedang
       {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'N', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'L', 'tds': 'N', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'N', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'N', 'tds': 'L', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'N', 'tds': 'H', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'N', 'tds': 'L', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'N', 'tds': 'H', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'L', 'tds': 'L', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'L', 'tds': 'H', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'H', 'tds': 'L', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'H', 'tds': 'H', 'turb': 'N'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'N', 'tds': 'N', 'turb': 'L'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'N', 'tds': 'N', 'turb': 'L'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'L', 'tds': 'N', 'turb': 'L'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'H', 'tds': 'N', 'turb': 'L'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'L', 'turb': 'L'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'N', 'tds': 'H', 'turb': 'L'},
-        'then': 'RS',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'L', 'tds': 'L', 'turb': 'N'},
+        'if': {'ph': 'L', 'sal': 'N', 'turb': 'T'},
         'then': 'RT',
-      },
+      }, // pH Low + Turbid -> Tinggi
       {
-        'if': {'ph': 'L', 'temp': 'L', 'tds': 'H', 'turb': 'N'},
+        'if': {'ph': 'L', 'sal': 'L', 'turb': 'N'},
         'then': 'RT',
-      },
+      }, // pH Low + Sal Low -> Tinggi
       {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'L', 'turb': 'N'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'H', 'turb': 'N'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'L', 'tds': 'L', 'turb': 'N'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'L', 'tds': 'H', 'turb': 'N'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'L', 'turb': 'N'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'H', 'turb': 'N'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'L', 'tds': 'N', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'N', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'L', 'tds': 'N', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'N', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'N', 'tds': 'L', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'N', 'tds': 'H', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'N', 'tds': 'L', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'L', 'tds': 'L', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'N', 'temp': 'L', 'tds': 'H', 'turb': 'H'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'L', 'tds': 'L', 'turb': 'L'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'L', 'tds': 'H', 'turb': 'L'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'H', 'turb': 'L'},
-        'then': 'RT',
-      },
-
-      {
-        'if': {'ph': 'H', 'temp': 'L', 'tds': 'L', 'turb': 'L'},
-        'then': 'RT',
-      },
-
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'L', 'turb': 'L'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'H', 'turb': 'L'},
-        'then': 'RT',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'L', 'turb': 'H'},
+        'if': {'ph': 'L', 'sal': 'L', 'turb': 'T'},
         'then': 'RST',
-      },
+      }, // pH Low + Sal Low + Turbid -> Sangat Tinggi
       {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'H', 'turb': 'H'},
-        'then': 'RST',
-      },
+        'if': {'ph': 'L', 'sal': 'H', 'turb': 'N'},
+        'then': 'RT',
+      }, // pH Low + Sal High -> Tinggi
       {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'L', 'turb': 'H'},
+        'if': {'ph': 'L', 'sal': 'H', 'turb': 'T'},
         'then': 'RST',
-      },
+      }, // pH Low + Sal High + Turbid -> Sangat Tinggi
+      // pH High
       {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'H', 'turb': 'H'},
-        'then': 'RST',
-      },
+        'if': {'ph': 'H', 'sal': 'N', 'turb': 'N'},
+        'then': 'RS',
+      }, // pH High -> Sedang
       {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'N', 'turb': 'N'},
-        'then': 'RST',
-      },
+        'if': {'ph': 'H', 'sal': 'N', 'turb': 'T'},
+        'then': 'RT',
+      }, // pH High + Turbid -> Tinggi
       {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'L', 'turb': 'N'},
-        'then': 'RST',
-      },
+        'if': {'ph': 'H', 'sal': 'L', 'turb': 'N'},
+        'then': 'RT',
+      }, // pH High + Sal Low -> Tinggi
       {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'H', 'turb': 'N'},
+        'if': {'ph': 'H', 'sal': 'L', 'turb': 'T'},
         'then': 'RST',
-      },
+      }, // pH High + Sal Low + Turbid -> Sangat Tinggi
       {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'N', 'turb': 'N'},
-        'then': 'RST',
-      },
+        'if': {'ph': 'H', 'sal': 'H', 'turb': 'N'},
+        'then': 'RT',
+      }, // pH High + Sal High -> Tinggi
       {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'L', 'turb': 'N'},
+        'if': {'ph': 'H', 'sal': 'H', 'turb': 'T'},
         'then': 'RST',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'H', 'turb': 'N'},
-        'then': 'RST',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'N', 'turb': 'H'},
-        'then': 'RST',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'L', 'turb': 'H'},
-        'then': 'RST',
-      },
-      {
-        'if': {'ph': 'L', 'temp': 'H', 'tds': 'H', 'turb': 'H'},
-        'then': 'RST',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'N', 'turb': 'H'},
-        'then': 'RST',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'L', 'turb': 'H'},
-        'then': 'RST',
-      },
-      {
-        'if': {'ph': 'H', 'temp': 'H', 'tds': 'H', 'turb': 'H'},
-        'then': 'RST',
-      },
-
-      // fallback rule: jika tidak cocok, set RS (risiko sedang)
-      // (Rule base ini dapat diperluas agar match persis dengan PDF)
+      }, // pH High + Sal High + Turbid -> Sangat Tinggi
     ];
 
-    // 3) Untuk setiap rule: hitung firing strength = min(degrees of the specified terms)
-    //    Perlu mapping dari term letter -> membership degree
+    // 3) Untuk setiap rule: hitung firing strength
     final Map<String, double> outputAggregation = {
       'RSR': 0.0,
       'RR': 0.0,
@@ -312,17 +126,15 @@ class FuzzyEvaluator {
       final outLabel = rule['then'] as String;
 
       final phDeg = phMFs[cond['ph']!] ?? 0.0;
-      final tDeg = tempMFs[cond['temp']!] ?? 0.0;
-      final tdDeg = tdsMFs[cond['tds']!] ?? 0.0;
+      final salDeg = salMFs[cond['sal']!] ?? 0.0;
       final tbDeg = turbMFs[cond['turb']!] ?? 0.0;
 
-      final firing = min(min(phDeg, tDeg), min(tdDeg, tbDeg)); // AND = min
+      final firing = min(min(phDeg, salDeg), tbDeg); // AND = min
       // aggregate by maximum (Mamdani)
       outputAggregation[outLabel] = max(outputAggregation[outLabel]!, firing);
     }
 
-    // 4) Defuzzifikasi: kita representasikan output linguistic -> numeric range
-    // gunakan representasi titik/centroid: RSR ~ 0, RR ~ 25, RS ~ 50, RT ~ 75, RST ~ 100
+    // 4) Defuzzifikasi
     final Map<String, double> outputCenters = {
       'RSR': 0.0,
       'RR': 25.0,
@@ -331,7 +143,6 @@ class FuzzyEvaluator {
       'RST': 100.0,
     };
 
-    // centroid sederhana: weighted average of centers by aggregated membership
     double numerator = 0.0;
     double denominator = 0.0;
     outputAggregation.forEach((label, mu) {
@@ -356,88 +167,59 @@ class FuzzyEvaluator {
       'score': double.parse(score.toStringAsFixed(2)),
       'aggregation': outputAggregation,
       'centers': outputCenters,
+      'calculated_salinity': salinity, // Useful for debugging
     };
   }
 
   // ----------------------------
   // Membership functions per variabel
-  // Output: Map<termLetter, degree>
-  // term letters: 'L' = Low/Rendah, 'N' = Normal, 'H' = High/Tinggi
   // ----------------------------
 
   static Map<String, double> _phMemberships(double x) {
-    // contoh batas: Rendah <6.5, Normal 6.5-8.5, Tinggi >8.5
+    // Sederhana: 7.5 - 8.5
     return {
-      'L': _leftTrapezoid(x, 0.0, 0.0, 6.0, 6.5),
-      'N': _triangular(x, 6.0, 7.5, 8.5),
-      'H': _rightTrapezoid(x, 8.0, 8.5, 14.0, 14.0),
+      'L': _shoulderLeft(x, 7.0, 7.5),
+      'N': _trapezoid(x, 7.0, 7.5, 8.5, 9.0),
+      'H': _shoulderRight(x, 8.5, 9.0),
     };
   }
 
-  static Map<String, double> _tempMemberships(double x) {
-    // suhu (°C) contoh: Rendah <24, Normal 24-32, Tinggi >32
+  static Map<String, double> _salinityMemberships(double x) {
+    // Sederhana: Salinitas 5 - 40 ppt
     return {
-      'L': _leftTrapezoid(x, -10.0, -10.0, 20.0, 24.0),
-      'N': _triangular(x, 20.0, 27.0, 32.0),
-      'H': _rightTrapezoid(x, 28.0, 32.0, 50.0, 50.0),
-    };
-  }
-
-  static Map<String, double> _tdsMemberships(double x) {
-    // TDS (mg/L) contoh: Rendah <300, Normal 300-500, Tinggi >500
-    return {
-      'L': _leftTrapezoid(x, 0.0, 0.0, 200.0, 300.0),
-      'N': _triangular(x, 250.0, 400.0, 500.0),
-      'H': _rightTrapezoid(x, 450.0, 500.0, 2000.0, 2000.0),
+      'L': _shoulderLeft(x, 4.0, 5.0),
+      'N': _trapezoid(x, 4.0, 5.0, 40.0, 41.0),
+      'H': _shoulderRight(x, 40.0, 41.0),
     };
   }
 
   static Map<String, double> _turbMemberships(double x) {
-    // Turbidity (NTU): Rendah <5, Normal 5-25, Tinggi >25
     return {
-      'L': _leftTrapezoid(x, 0.0, 0.0, 2.0, 5.0),
-      'N': _triangular(x, 3.0, 12.0, 25.0),
-      'H': _rightTrapezoid(x, 20.0, 25.0, 100.0, 100.0),
+      'N': _shoulderLeft(x, 20.0, 25.0),
+      'T': _shoulderRight(x, 20.0, 25.0),
     };
   }
 
   // ----------------------------
   // Basic membership shapes
   // ----------------------------
-  static double _triangular(double x, double a, double b, double c) {
-    if (x <= a || x >= c) return 0.0;
-    if (x == b) return 1.0;
-    if (x < b) return (x - a) / (b - a);
-    return (c - x) / (c - b);
+
+  static double _shoulderLeft(double x, double a, double b) {
+    if (x <= a) return 1.0;
+    if (x >= b) return 0.0;
+    return (b - x) / (b - a);
   }
 
-  static double _leftTrapezoid(
-    double x,
-    double a,
-    double b,
-    double c,
-    double d,
-  ) {
-    // rise from a->b, plateau b->c, fall c->d (but here used for left open shapes)
-    if (x <= b) return 1.0;
-    if (x >= d) return 0.0;
-    if (x > b && x < c) return (x - b) / (c - b);
-    // between c and d: linear fall
-    return (d - x) / (d - c);
-  }
-
-  static double _rightTrapezoid(
-    double x,
-    double a,
-    double b,
-    double c,
-    double d,
-  ) {
-    // left rise a->b, plateau b->c, right fall c->d (used for right open shapes)
+  static double _shoulderRight(double x, double a, double b) {
     if (x <= a) return 0.0;
-    if (x >= c) return 1.0;
-    if (x > a && x < b) return (x - a) / (b - a);
-    // between b and c: plateau -> 1
-    return 1.0;
+    if (x >= b) return 1.0;
+    return (x - a) / (b - a);
+  }
+
+  static double _trapezoid(double x, double a, double b, double c, double d) {
+    if (x <= a || x >= d) return 0.0;
+    if (x >= b && x <= c) return 1.0;
+    if (x < b) return (x - a) / (b - a);
+    return (d - x) / (d - c);
   }
 }

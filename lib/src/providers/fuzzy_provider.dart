@@ -26,12 +26,7 @@ final fuzzyProvider = Provider<AsyncValue<Map<String, dynamic>>>((ref) {
     final tds = sensorData.tds ?? 100.0;
     final turb = sensorData.turbidity ?? 50.0;
 
-    final result = FuzzyEvaluator.evaluate(
-      ph: ph,
-      temperature: temp,
-      tds: tds,
-      turbidity: turb,
-    );
+    final result = FuzzyEvaluator.evaluate(ph: ph, tds: tds, turbidity: turb);
 
     // Return data with input values for debugging
     return {
